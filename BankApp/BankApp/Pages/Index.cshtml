@@ -1,0 +1,95 @@
+﻿@page
+@model IndexModel
+@{
+}
+
+<div class="text-center">
+    <h1 class="display-4">Dodaj nowy komputer:</h1>
+</div>
+<div> 
+    <form class="add_computer">
+        <table class="add_table" align="center">
+            <tr>
+                <td><label class="form_label" for="komputerName">Nazwa komputera</label></td>
+                <td><input type="text" minlenght = "4" maxlength="100" id="komputerName" name="komputerName"></td>
+                <br>
+            </tr>
+            <tr>
+                <td><label class="form_label" for="USDPrice">Cena USD</label></td>
+                <td><input type="number" value="0" min="0" id="USDPrice" name="USDPrice"></td>
+                <br>
+            </tr>
+            <tr>
+                <td><label class="form_label" for="kurs">Kurs</label> </td>
+                <td><input type="number" value="0" id="kurs" name="kurs" disabled></td>
+                <br>
+            </tr>
+            <tr>
+                <td><label class="form_label" for="PLNPrice">Cena PLN</label></td>
+                <td><input type="number" value="0" id="PLNPrice" name="PLNPrice" disabled></td>
+                <br>
+            </tr>
+            <tr>
+                <td> <label class="form_label" for="accountingDate">Data księgowania</label></td>
+                <td> <input type="date" id="accountingDate" name="accountingDate" value="@DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd")" min="2021-01-01" max="@DateTime.Today.AddDays(-1).ToString("yyyy-MM-dd")"></td>
+                <br>
+            </tr>
+            <tr>
+                <td><button name="submit" id="saveToDB" type="submit" value="index.html">Dodaj</button></td>
+            </tr>
+        </table>
+    </form>
+    <div id="savedInfo"></div>
+</div>
+
+@section scripts{
+    <script>
+        function updateKurs(){
+            var date = $('td input#accountingDate[type="date"]').val();
+                $.ajax({
+                    url: '/api/Kurs/' + date,
+                }).done(function (result) {
+                    $('td input#kurs').val(result);
+                    var calculatedPrice = $('input#USDPrice').val() * $('td input#kurs').val();
+                $('input#PLNPrice').val(calculatedPrice.toFixed(2));
+                });
+        }
+        $(function () {
+            $('button#getKurs').on('click', function () {
+                updateKurs();
+            });
+
+            $('input#USDPrice').on('change', function () {
+                var calculatedPrice = $('input#USDPrice').val() * $('td input#kurs').val();
+                $('input#PLNPrice').val(calculatedPrice.toFixed(2));
+            });
+
+            $('input#accountingDate').on('change', function () {
+                updateKurs();
+            });
+
+            $(document).ready(function() {
+                updateKurs();
+            });
+            $('td button#saveToDB[name="submit"]').on('click', function () {
+                var nameFromForm = $('td input#komputerName[name="komputerName"]').val();
+                var dateFromForm = $('td input#accountingDate').val();
+                var USDPriceFromForm = $('input#USDPrice').val() * 100;
+                var PLNPriceFromForm = $('input#PLNPrice').val() * 100;
+                var kursFromForm = $('td input#kurs').val();
+                var komputer = { "Nazwa": nameFromForm, "Data_ksiegowania": dateFromForm, "Koszt_USD": USDPriceFromForm, "Koszt_PLN": PLNPriceFromForm, "Kurs": kursFromForm};
+                $.ajax
+                ({
+                    type: 'POST',
+                    url: '/api/Komputer',
+                    contentType: 'application/json; charset=utf-8',
+                    headers: {},
+                    data: JSON.stringify(komputer)
+                }).done(function (result) {
+                    console.log(result)
+                });
+            });
+        });
+
+    </script>
+}
